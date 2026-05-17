@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Engine // PRISM7</title>
+    <link rel="stylesheet" href="css/futuristic.css?v=10.2.3">
+</head>
+
+<div id="particle-background"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.3;">
+</div>
+<div id="matrix-rain"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.1;">
+</div>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="logo-text">PRISM7</div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-item">DASHBOARD</a>
+            <a href="vault.html" class="nav-item">VAULT</a>
+            <a href="timeline.html" class="nav-item">TIMELINE</a>
+            <a href="report.html" class="nav-item active">REPORTS</a>
+        </nav>
+    </aside>
+
+    <main class="main-stage">
+        <header>
+            <h1>REPORTS</h1>
+            <p style="color: var(--text-sub); font-family: var(--font-mono); font-size: 0.8rem; margin-top: 1rem;">
+                >> GENERATING_VERIFIED_FORENSIC_DOSSIER</p>
+        </header>
+
+        <div id="report-generator" style="margin-top: 4rem; max-width: 600px;">
+            <div class="result-card" style="padding: 3rem; background: #fff;">
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label class="form-label">TARGET_CASE_ID</label>
+                    <input type="text" id="report-case-id" class="form-input" placeholder="e.g. ALPHA_01">
+                </div>
+                <button id="gen-btn" onclick="generateReport()" class="btn-rainbow"
+                    style="width: 100%;">GENERATE_PDF</button>
+
+                <div id="report-status" style="margin-top: 2rem;">
+                    <div class="res-card res-status-warn">
+                        <div class="res-title">>> ENGINE_IDLE</div>
+                        <div class="res-value" style="color: var(--text-sub);">
+                            AWAITING_CASE_AUTHORITY_FOR_COMPILATION...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/api.js?v=10.2.3"></script>
+<script src="js/visuals.js?v=10.2.3"></script>
+<script src="js/animations.js?v=10.2.3"></script>
+<script>
+    async function generateReport() {
+        const caseId = document.getElementById('report-case-id').value || sessionStorage.getItem('current_case');
+        if (!caseId) return alert("Case ID Required");
+
+        const status = document.getElementById('report-status');
+        const btn = document.getElementById('gen-btn');
+
+        status.innerHTML = '<div style="color: var(--c2);">>> COMPILING_BLOCKCHAIN_AUDIT_LOGS...</div>';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+
+        try {
+            const response = await ApiClient.get(`/api/report?case_id=${caseId}`);
+
+            if (response.error) {
+                status.innerHTML = `<div class="res-card res-status-error">
+                    <div class="res-title">>> COMPILATION_FAULT</div>
+                    <div class="res-value">${response.error}</div>
+                </div>`;
+            } else {
+                status.innerHTML = `
+                    <div class="res-card res-status-success">
+                        <div class="res-header">
+                            <span class="res-title">>> COMPLETE</span>
+                            <span class="res-badge" style="background: var(--c13); color: #fff;">VERIFIED</span>
+                        </div>
+                        <div class="res-row"><div class="res-label">REPORT_ID</div><div class="res-value">${response.report_url.split('/').pop()}</div></div>
+                        <div class="res-row"><div class="res-label">LEGAL_AUTHORITY</div><div class="res-value">Forensic PDF Dossier Ready</div></div>
+                        <div style="margin-top: 1.5rem;">
+                            <a href="${response.report_url}" class="btn-rainbow" style="display: inline-block; text-decoration: none; padding: 0.8rem 1.5rem;">DOWNLOAD_DOSSIER</a>
+                        </div>
+                    </div>`;
+            }
+        } catch (e) {
+            status.innerHTML = `<div class="res-card res-status-error">
+                <div class="res-title">>> BRIDGE_FAULT</div>
+                <div class="res-value">${e.message}</div>
+            </div>`;
+        } finally {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    }
+
+    window.onload = () => {
+        const c = sessionStorage.getItem('current_case');
+        if (c) document.getElementById('report-case-id').value = c;
+    };
+</script>
+</body>
+
+</html>

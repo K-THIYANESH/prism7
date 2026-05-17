@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Node // PRISM7</title>
+    <link rel="stylesheet" href="css/futuristic.css?v=10.2.3">
+</head>
+
+<div id="particle-background"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.3;">
+</div>
+<div id="matrix-rain"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.1;">
+</div>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="logo-text">PRISM7</div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-item">DASHBOARD</a>
+            <a href="vault.html" class="nav-item">VAULT</a>
+            <a href="timeline.html" class="nav-item">TIMELINE</a>
+            <a href="report.html" class="nav-item">REPORTS</a>
+        </nav>
+    </aside>
+
+    <main class="main-stage">
+        <header>
+            <div id="module-hero-area">
+                <!-- High-Tech Hero Visual injected by modules.js -->
+            </div>
+        </header>
+
+        <div class="module-interface"
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 2rem;">
+            <div id="module-command">
+                <!-- Form injected by modules.js -->
+            </div>
+
+            <div id="module-terminal" style="max-height: 80vh; overflow-y: auto; padding-right: 1rem;">
+                <div class="result-card"
+                    style="height: auto; min-height: 300px; display: flex; flex-direction: column; background: rgba(0,0,0,0.8); border: 1px solid var(--border-soft); backdrop-filter: blur(20px);">
+                    <div
+                        style="padding: 1rem; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                        <span
+                            style="font-family: var(--font-mono); font-size: 0.7rem; color: #666;">ANALYSIS_COMMAND_CENTER</span>
+                        <span id="blockchain-sync-badge" class="badge-blended"
+                            style="font-size: 0.6rem; background: var(--c1);">AWAITING_PROTOCOL</span>
+                    </div>
+                    <div id="terminal-output"
+                        style="flex: 1; padding: 1.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--c13);">
+                        <div class="res-card res-status-warn">
+                            <div class="res-title">>> SYSTEM_READY</div>
+                            <div class="res-value" style="color: var(--text-sub);">
+                                SELECT_PROTOCOL_TO_START_CHRONOMETRIC_ANALYSIS...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/api.js?v=10.2.3"></script>
+<script src="js/visuals.js?v=10.2.3"></script>
+<script src="js/animations.js?v=10.2.3"></script>
+<script src="js/modules.js?v=10.2.3"></script>
+<script>
+    window.ResultFormatter = {
+        format: function (moduleId, data) {
+            if (data.error) return this.errorCard(data.error);
+
+            switch (moduleId) {
+                case 'search': return this.searchCard(data);
+                case 'recovery': return this.recoveryCard(data);
+                case 'acquisition': return this.acquisitionCard(data);
+                case 'parser': return this.parserCard(data);
+                case 'vault': return this.vaultCard(data);
+                case 'integrity': return this.integrityCard(data);
+                case 'log_analysis': return this.logAnalysisCard(data);
+                default: return this.genericCard(data);
+            }
+        },
+
+        errorCard: (msg) => `<div class="res-card res-status-error"><div class="res-title">>> SYSTEM_FAULT</div><div class="res-value">${msg}</div></div>`,
+
+        logAnalysisCard: function (data) {
+            const riskColor = data.risk_score > 70 ? 'var(--c1)' : (data.risk_score > 40 ? 'var(--c4)' : 'var(--c13)');
+            const riskLabel = data.risk_score > 70 ? 'CRITICAL_THREAT' : (data.risk_score > 40 ? 'SUSPICIOUS_ACTIVITY' : 'SECURE_NODE');
+
+            setTimeout(() => this.renderAnalyticsDashboard(data), 100);
+
+            let html = `<div class="res-card" style="border-left: 3px solid ${riskColor}; background: rgba(0,0,0,0.4); padding: 0;">
+                <div class="res-header" style="background: rgba(255,255,255,0.02); padding: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span class="res-title" style="letter-spacing: 2px;">>> THREAT_INTELLIGENCE_DASHBOARD</span>
+                    <span class="res-badge" style="background: ${riskColor}; color: #fff; box-shadow: 0 0 10px ${riskColor}44;">${riskLabel}</span>
+                </div>
+                
+                <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- VERTICAL_FORENSIC_STACK -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="intel-stat-box" style="display: flex; align-items: center; justify-content: space-around; padding: 1.5rem; background: rgba(255,255,255,0.01);">
+                            <div style="text-align: center;">
+                                <div class="res-title" style="font-size:0.55rem; color:#fff; margin-bottom: 0.5rem; opacity: 0.8;">RISK_LEVEL_INDEX</div>
+                                <div style="height: 100px; width: 100px; position:relative; display:flex; align-items:center; justify-content:center;">
+                                    <canvas id="riskGauge"></canvas>
+                                    <div style="position:absolute; font-size:1.5rem; font-weight:700; color:${riskColor}; text-shadow: 0 0 10px ${riskColor}66;">${data.risk_score}</div>
+                                </div>
+                            </div>
+                            <div style="height: 50px; width: 1px; background: rgba(255,255,255,0.1);"></div>
+                            <div style="text-align: center;">
+                                <div class="res-title" style="font-size:0.55rem; color:#fff; margin-bottom: 0.5rem; opacity: 0.8;">TRAFFIC_DISTRIBUTION</div>
+                                <div style="height: 80px; width: 120px; display:flex; align-items:center;"><canvas id="ratioChart"></canvas></div>
+                            </div>
+                        </div>
+
+                        <div class="res-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0;">
+                            <div class="res-title" style="font-size: 0.55rem; color: #fff; margin-bottom: 1rem; opacity: 0.8;">TEMPORAL_ATTACK_SPECTRUM</div>
+                            <div style="height: 200px; width: 100%;"><canvas id="timelineChart"></canvas></div>
+                        </div>
+
+                        <div class="res-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0;">
+                            <div class="res-title" style="font-size: 0.55rem; color: #fff; margin-bottom: 1rem; opacity: 0.8;">CRITICAL_EVENT_LEDGER</div>
+                            <div style="max-height: 250px; overflow-y: auto; overflow-x: hidden;" class="custom-scroll">
+                                <table style="width:100%; font-size:0.65rem; border-collapse:collapse;">
+                                    <tr style="text-align:left; color:#fff; background: rgba(255,255,255,0.05);">
+                                        <th style="padding:0.7rem; opacity: 0.9;">TIMESTAMP</th>
+                                        <th style="padding:0.7rem; opacity: 0.9;">PROTOCOL_IP</th>
+                                        <th style="padding:0.7rem; opacity: 0.9;">STATUS_ALERT</th>
+                                        <th style="padding:0.7rem; opacity: 0.9;">SEVERITY</th>
+                                    </tr>
+                                    ${data.suspicious_events.map(e => `
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                            <td style="padding:0.7rem; color:var(--c2); font-family: var(--font-mono);">${e.timestamp}</td>
+                                            <td style="padding:0.7rem; font-family:var(--font-mono); color: #fff;">${e.ip}</td>
+                                            <td style="padding:0.7rem; color:#ccc;">${e.event}</td>
+                                            <td style="padding:0.7rem;"><span class="res-badge" style="padding: 2px 8px; font-size:0.55rem; background:${e.severity === 'CRITICAL' ? 'var(--c1)' : 'var(--c4)'}">${e.severity}</span></td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#fff; opacity:0.5;">NO_THREATS_DETECTED</td></tr>'}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    ${this.rawToggle(data)}
+                </div>
+            </div>`;
+            return html;
+        },
+
+        renderAnalyticsDashboard: function (data) {
+            const ctxRisk = document.getElementById('riskGauge').getContext('2d');
+            new Chart(ctxRisk, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [data.risk_score, 100 - data.risk_score],
+                        backgroundColor: [data.risk_score > 70 ? '#ff3b3b' : '#00ff88', '#1a1a1a'],
+                        borderWidth: 0,
+                        circumference: 180,
+                        rotation: 270,
+                    }]
+                },
+                options: { cutout: '80%', plugins: { tooltip: { enabled: false } } }
+            });
+
+            const ctxRatio = document.getElementById('ratioChart').getContext('2d');
+            new Chart(ctxRatio, {
+                type: 'bar',
+                data: {
+                    labels: ['Success', 'Failed'],
+                    datasets: [{
+                        data: [data.success_counts.reduce((a, b) => a + b, 0), data.failure_counts.reduce((a, b) => a + b, 0)],
+                        backgroundColor: ['#00ff88', '#ff3b3b'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#ccc', font: { size: 10 } } } }
+                }
+            });
+
+            const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+            new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: data.timeline.map(t => t.split(' ')[1]),
+                    datasets: [
+                        {
+                            label: 'Attempts',
+                            data: data.total_attempts,
+                            borderColor: '#00ff88',
+                            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Failures',
+                            data: data.failure_counts,
+                            borderColor: '#ff3b3b',
+                            backgroundColor: 'rgba(255, 59, 59, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#ccc', font: { size: 10 } } } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#ccc', font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc', font: { size: 10 } } }
+                    }
+                }
+            });
+        },
+
+        searchCard: function (data) {
+            const matches = data.matches || [];
+            let html = `<div class="res-card res-status-success">
+                <div class="res-header">
+                    <span class="res-title">>> KEYWORD_SEARCH_PROTOCOL</span>
+                    <span class="res-badge">${matches.length} MATCHES</span>
+                </div>
+                <div class="res-value">QUERY: "${data.query}"</div>
+                
+                <div style="margin-top: 1rem; max-height: 400px; overflow-y: auto; padding-right: 0.5rem;" class="custom-scroll">
+                    ${matches.map(m => `
+                        <div class="res-row" style="padding: 1rem; background: rgba(255,255,255,0.02); margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+                            <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--c2); margin-bottom: 0.5rem;">FILE: ${m.file} | LINE: ${m.line_number}</div>
+                            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #fff;">${m.line}</div>
+                        </div>
+                    `).join('')}
+                    ${matches.length === 0 ? '<div style="text-align:center; padding: 2rem; color: var(--text-sub);">NO_MATCHES_FOUND</div>' : ''}
+                </div>
+                ${this.rawToggle(data)}
+            </div>`;
+            return html;
+        },
+
+        recoveryCard: function (data) {
+            return `<div class="res-card res-status-success">
+                <div class="res-header"><span class="res-title">>> RECOVERY_ARCHIVE_READY</span><span class="res-badge" style="background:var(--c13)">SUCCESS</span></div>
+                <div class="res-row"><div class="res-label">ARCHIVE_ID</div><div class="res-value">${data.zip_name || 'RECOVERY_PACKAGE'}</div></div>
+                <div class="res-row"><div class="res-label">FILES_CARVED</div><div class="res-value">${data.count || 'N/A'}</div></div>
+                <div style="margin-top: 1rem;"><a href="${data.download_url}" class="btn-rainbow" style="padding: 0.5rem 1rem; font-size: 0.6rem; text-decoration: none;">DOWNLOAD_ZIP</a></div>
+            </div>`;
+        },
+
+        acquisitionCard: function (data) {
+            return `<div class="res-card res-status-success">
+                <div class="res-header"><span class="res-title">>> DATA_ACQUIRED_AND_ANCHORED</span><span class="res-badge" style="background:var(--c13)">LEDGER_SYNCED</span></div>
+                <div class="res-row"><div class="res-label">EXHIBIT_ID</div><div class="res-value">${data.exhibit_id || 'AL-001X'}</div></div>
+                <div class="res-row"><div class="res-label">IPFS_HASH</div><div class="res-value" style="color:var(--c2)">${data.ipfs_hash || 'SHA256:0x...'}</div></div>
+                <div class="res-row"><div class="res-label">BLOCKCHAIN_TX</div><div class="res-value" style="color:var(--c4)">${data.tx_hash || '0x4f...8a'}</div></div>
+            </div>`;
+        },
+
+        parserCard: function (data) {
+            let html = `<div class="res-card res-status-success" style="background: rgba(0,0,0,0.4); border-left: 3px solid var(--c13);">
+                <div class="res-header">
+                    <span class="res-title">>> FORENSIC_ARTIFACT_PARSER</span>
+                    <span class="res-badge" style="background: var(--c13); color: #fff;">${data.type ? data.type.toUpperCase() : 'PARSED'}</span>
+                </div>
+                
+                <div style="padding: 0.5rem;">
+                    ${data.metadata ? `
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="res-title" style="font-size:0.55rem; color:var(--text-sub); margin-bottom: 0.8rem;">FILE_SYSTEM_METADATA</div>
+                            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                                <div style="display: flex; justify-content: space-between;"><span style="color:var(--text-sub); font-size:0.6rem;">FILENAME:</span><span style="font-family:var(--font-mono); font-size:0.7rem; color:#fff;">${data.metadata.filename}</span></div>
+                                <div style="display: flex; justify-content: space-between;"><span style="color:var(--text-sub); font-size:0.6rem;">SIZE:</span><span style="font-family:var(--font-mono); font-size:0.7rem; color:var(--c13); font-weight:700;">${(data.metadata.size_bytes / 1024).toFixed(2)} KB</span></div>
+                                <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                    <span style="color:var(--text-sub); font-size:0.6rem;">SHA256_INTEGRITY_HASH:</span>
+                                    <span style="font-family:var(--font-mono); font-size:0.55rem; color:var(--c2); word-break: break-all; background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 4px;">${data.hash || 'EXTRACTING...'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${data.events ? `
+                        <div class="res-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0;">
+                            <div class="res-title" style="font-size:0.55rem; color:var(--text-sub); margin-bottom: 1rem;">SEQUENTIAL_EVENT_STREAM</div>
+                            <div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;" class="custom-scroll">
+                                ${data.events.map(e => `
+                                    <div style="padding: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 1rem; align-items: flex-start;">
+                                        <div style="color: var(--c2); font-family: var(--font-mono); font-size: 0.6rem; min-width: 140px; background: rgba(255,255,255,0.02); padding: 2px 5px; border-radius: 3px;">[ ${e.timestamp} ]</div>
+                                        <div style="color: #fff; font-size: 0.7rem; line-height: 1.4;">${e.message}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${this.rawToggle(data)}
+                </div>
+            </div>`;
+            return html;
+        },
+
+        rawToggle: function (data) {
+            const id = 'raw-' + Math.random().toString(36).substr(2, 9);
+            return `
+            <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                <button onclick="document.getElementById('${id}').style.display = document.getElementById('${id}').style.display === 'none' ? 'block' : 'none'" 
+                        style="background: transparent; border: 1px solid var(--border-soft); color: var(--text-sub); font-size: 0.55rem; padding: 0.3rem 0.6rem; cursor: pointer; border-radius: 4px;">
+                    VIEW_RAW_INTELLIGENCE_JSON
+                </button>
+                <pre id="${id}" style="display: none; margin-top: 1rem; background: #000; padding: 1rem; border-radius: 8px; font-size: 0.6rem; color: var(--c13); overflow-x: auto; max-height: 200px;">${JSON.stringify(data, null, 2)}</pre>
+            </div>`;
+        },
+
+        vaultCard: function (data) {
+            let html = `<div class="res-card res-status-success">
+                <div class="res-header"><span class="res-title">>> LEDGER_SYNC</span><span class="res-badge" style="background:var(--c13)">${data.length}_BLOCKS</span></div>`;
+            data.forEach(b => {
+                html += `<div class="res-row" style="margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05); padding: 0.5rem; background: rgba(255,255,255,0.02);">
+                    <div style="flex: 1;">
+                        <div style="color:var(--c2); font-size: 0.6rem; font-weight: 700;">BLOCK_${b.id} | ${b.timestamp}</div>
+                        <div style="color:var(--text-main); font-size: 0.75rem; font-weight: 700;">${b.action}</div>
+                        <div style="color:var(--text-sub); font-size: 0.65rem;">${b.notes}</div>
+                    </div>
+                </div>`;
+            });
+            return html + `</div>`;
+        },
+
+        integrityCard: function (data) {
+            const status = data.verified ? 'VERIFIED' : 'FAILED';
+            const color = data.verified ? '--c13' : '--c1';
+            return `<div class="res-card ${data.verified ? 'res-status-success' : 'res-status-error'}">
+                <div class="res-header"><span class="res-title">>> INTEGRITY_CHECK</span><span class="res-badge" style="background:var(${color})">${status}</span></div>
+                <div class="res-row"><div class="res-label">EXPECTED</div><div class="res-value" style="color:var(--text-sub)">${data.expected_hash}</div></div>
+                <div class="res-row"><div class="res-label">CALCULATED</div><div class="res-value" style="color:var(${color})">${data.actual_hash}</div></div>
+                <div class="res-row"><div class="res-label">STATUS</div><div class="res-value">${data.verified ? 'FILE_MATCH_RECONFIRMED' : 'INTEGRITY_BREACH_DETECTED'}</div></div>
+                ${this.rawToggle(data)}
+            </div>`;
+        },
+
+        recoveryCard: function (data) {
+            const id = 'rec-' + Math.random().toString(36).substr(2, 9);
+            const logs = data.carving_log || [];
+
+            // Simulation logic
+            setTimeout(() => {
+                const logContainer = document.getElementById(id + '-logs');
+                const artifactLedger = document.getElementById(id + '-ledger');
+                if (!logContainer) return;
+
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < logs.length) {
+                        const line = document.createElement('div');
+                        line.style.marginBottom = '4px';
+                        line.innerHTML = `<span style="color:var(--c2)">[ ${new Date().toLocaleTimeString()} ]</span> <span style="color:#fff">${logs[i]}</span>`;
+                        logContainer.appendChild(line);
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        if (artifactLedger) artifactLedger.style.opacity = '1';
+                    }
+                }, 100);
+            }, 500);
+
+            let html = `<div class="res-card res-status-success" style="background: rgba(0,0,0,0.4); border-left: 3px solid var(--c13);">
+                <div class="res-header">
+                    <span class="res-title">>> FORENSIC_VOID_CARVER</span>
+                    <span class="res-badge" style="background: var(--c13); color: #fff;">${data.recovered_count}_FRAGMENTS_RESTORED</span>
+                </div>
+                
+                <div style="padding: 1rem;">
+                    <div id="${id}-logs" class="custom-scroll" style="height: 151px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 0.8rem; font-family: var(--font-mono); font-size: 0.6rem; overflow-y: auto; margin-bottom: 1.5rem;">
+                        <div style="color: var(--text-sub)">INITIALIZING_RECOVERY_PROTOCOL...</div>
+                    </div>
+
+                    <div id="${id}-ledger" style="opacity: 0; transition: opacity 0.8s ease;">
+                        <div class="res-title" style="font-size:0.55rem; color:#fff; margin-bottom: 1rem; opacity: 0.8;">RECOVERED_ARTIFACT_LEDGER</div>
+                        <div style="max-height: 200px; overflow-y:auto; border: 1px solid rgba(255,255,255,0.03); border-radius: 8px;" class="custom-scroll">
+                            <table style="width:100%; font-size:0.65rem; border-collapse:collapse;">
+                                <tr style="text-align:left; color:#fff; background: rgba(255,255,255,0.05);">
+                                    <th style="padding:0.75rem;">ARTIFACT_ID</th>
+                                    <th style="padding:0.75rem;">EXTENSION</th>
+                                    <th style="padding:0.75rem;">STATUS</th>
+                                </tr>
+                                ${data.recovered_files.map((f, idx) => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding:0.75rem; color:var(--c2); font-family: var(--font-mono);">${f}</td>
+                                        <td style="padding:0.75rem; color:#fff;">${f.split('.').pop().toUpperCase()}</td>
+                                        <td style="padding:0.75rem;"><span class="res-badge" style="padding: 2px 6px; font-size:0.55rem; background:var(--c13)">RESTORED</span></td>
+                                    </tr>
+                                `).join('') || '<tr><td colspan="3" style="padding:2rem; text-align:center; color:rgba(255,255,255,0.2);">NO_FRAGMENTS_FOUND</td></tr>'}
+                            </table>
+                        </div>
+
+                        ${data.zip_filename ? `
+                            <div style="margin-top: 1.5rem; text-align: right;">
+                                <a href="${data.download_url}" target="_blank" class="btn-rainbow" style="text-decoration: none; display: inline-block; padding: 0.6rem 1.2rem; font-size: 0.65rem;">
+                                    DOWNLOAD_FORENSIC_ZIP
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${this.rawToggle(data)}
+                </div>
+            </div>`;
+            return html;
+        },
+
+        genericCard: (data) => `<div class="res-card res-status-success"><div class="res-title">>> SYSTEM_RESPONSE</div><pre style="color: var(--c13); font-size: 0.7rem; margin-top: 1rem;">${JSON.stringify(data, null, 2)}</pre></div>`
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const moduleId = params.get('module');
+
+        if (moduleId) {
+            // 1. Inject Hero Visual
+            document.getElementById('module-hero-area').innerHTML = window.ModuleRenderer.renderModuleHero(moduleId);
+            // 2. Inject Module Form
+            document.getElementById('module-command').innerHTML = window.ModuleRenderer.renderModuleForm(moduleId);
+
+            // 3. Handle Form Submission
+            const form = document.getElementById('module-form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                const term = document.getElementById('terminal-output');
+                const badge = document.getElementById('blockchain-sync-badge');
+
+                // Clear and show initiating state
+                term.innerHTML = `<div class="res-card res-status-warn">
+                    <div class="res-header">
+                        <span class="res-title">>> INITIATING_${moduleId.toUpperCase()}_PROTOCOL</span>
+                        <span class="res-badge" style="background: var(--c4);">ANCHORING...</span>
+                    </div>
+                    <div class="res-value" style="color: var(--text-sub);">Connecting to Forensic Ledger Authority...</div>
+                </div>`;
+
+                badge.innerHTML = 'ANCHORING...';
+                badge.style.background = 'var(--c4)';
+
+                try {
+                    const response = await ApiClient.post(window.MODULES[moduleId].endpoint, data);
+
+                    // Use chromatic formatter
+                    term.innerHTML = window.ResultFormatter.format(moduleId, response);
+
+                    badge.innerHTML = 'LEDGER_VERIFIED';
+                    badge.style.background = 'var(--c13)';
+                } catch (err) {
+                    term.innerHTML = `<div class="res-card res-status-error">
+                        <div class="res-header">
+                            <span class="res-title">>> FATAL_BRIDGE_ERROR</span>
+                            <span class="res-badge" style="background: var(--c1);">SYNC_FAILURE</span>
+                        </div>
+                        <div class="res-value">${err.message}</div>
+                    </div>`;
+                    badge.innerHTML = 'SYNC_ERROR';
+                    badge.style.background = 'var(--c1)';
+                }
+            });
+        }
+    });
+</script>
+</body>
+
+</html>

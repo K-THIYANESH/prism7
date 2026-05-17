@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRISM7 </title>
+  <link rel="stylesheet" href="css/futuristic.css?v=10.2.3">
+</head>
+
+<div id="particle-background"
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.3;">
+</div>
+<div id="matrix-rain"
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.1;">
+</div>
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="logo-text">PRISM7</div>
+    <nav class="nav-links">
+      <a href="index.html" class="nav-item active">DASHBOARD</a>
+      <a href="vault.html" class="nav-item">VAULT</a>
+      <a href="timeline.html" class="nav-item">TIMELINE</a>
+      <a href="report.html" class="nav-item">REPORT</a>
+    </nav>
+    <div
+      style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 1rem;">
+      <button onclick="promptNewCase()" class="btn-rainbow"
+        style="width: 100%; font-size: 0.65rem;">REGISTER_CASE</button>
+      <button onclick="window.ModuleRenderer.loadDemoData()" class="btn-rainbow"
+        style="width: 100%; font-size: 0.65rem; background: #fff; color: #000; border: 1px solid #000;">FILL_CASE</button>
+    </div>
+  </aside>
+
+  <main class="main-stage">
+    <header>
+      <div class="header-wrapper">
+        <h1>COMMAND_CENTER</h1>
+        <div class="info-bar"
+          style="margin-top: 2rem; display: flex; align-items: center; gap: 3rem; font-family: var(--font-mono); font-size: 0.85rem;">
+          <div>NODE_ID: <span style="color: var(--c2); font-weight: 700;">PRISM_LAB</span></div>
+          <div>STATUS: <span id="bc-status" class="badge-blended">CONNECTING...</span></div>
+          <div style="margin-left: auto;">ACTIVE_SESSION: <span id="current-case-display"
+              class="badge-blended">NONE</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div id="module-grid" class="module-grid">
+      <!-- Elite v10.2.3 Grid injected by modules.js -->
+    </div>
+  </main>
+</div>
+
+<script src="js/api.js?v=10.2.3"></script>
+<script src="js/visuals.js?v=10.2.3"></script>
+<script src="js/animations.js?v=10.2.3"></script>
+<script src="js/modules.js?v=10.2.3"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('module-grid');
+    grid.innerHTML = window.ModuleRenderer.renderModuleCards();
+
+    document.querySelectorAll('.module-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const mod = card.getAttribute('data-id');
+        if (mod === 'reporting') window.location.href = 'report.html';
+        else if (mod === 'timeline') window.location.href = 'timeline.html';
+        else if (mod === 'vault') window.location.href = 'vault.html';
+        else window.location.href = `modules.html?module=${mod}`;
+      });
+    });
+
+    const current = sessionStorage.getItem('current_case');
+    if (current) document.getElementById('current-case-display').innerHTML = current;
+
+    const checkStatus = async () => {
+      try {
+        const status = await ApiClient.get('/api/blockchain/status');
+        const el = document.getElementById('bc-status');
+        el.innerHTML = status.connected ? 'LEDGER_CONNECTED' : 'OFFLINE';
+        el.style.background = status.connected ? 'var(--c13)' : 'var(--c1)';
+        el.style.color = '#fff';
+      } catch (e) {
+        document.getElementById('bc-status').innerHTML = 'DISCONNECTED';
+        document.getElementById('bc-status').style.background = 'var(--c1)';
+        document.getElementById('bc-status').style.color = '#fff';
+      }
+    };
+    checkStatus();
+  });
+
+  async function promptNewCase() {
+    const caseId = prompt("Enter Case ID (e.g. ALPHA_01):");
+    if (caseId) {
+      try {
+        const response = await ApiClient.post('/api/blockchain/register', { case_id: caseId });
+        if (response.status === 'success') {
+          sessionStorage.setItem('current_case', caseId);
+          alert("Case Registered on Blockchain!");
+          window.location.reload();
+        } else {
+          alert("Registration Failed: " + (response.error || response.message));
+        }
+      } catch (err) {
+        alert("Blockchain Bridge Error: " + err.message);
+      }
+    }
+  }
+</script>
+</body>
+
+</html>

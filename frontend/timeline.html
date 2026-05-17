@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TIMELINE // PRISM7</title>
+  <link rel="stylesheet" href="css/futuristic.css?v=10.2.3">
+</head>
+
+<body>
+  <div id="particle-background"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.3;">
+  </div>
+  <div id="matrix-rain"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.1;">
+  </div>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="logo-text">PRISM7</div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-item">DASHBOARD</a>
+        <a href="vault.html" class="nav-item">VAULT</a>
+        <a href="timeline.html" class="nav-item active">TIMELINE</a>
+        <a href="report.html" class="nav-item">REPORTS</a>
+      </nav>
+    </aside>
+
+    <main class="main-stage">
+      <header>
+        <h1>TIMELINE</h1>
+        <p style="color: var(--text-sub); font-family: var(--font-mono); font-size: 0.8rem; margin-top: 1rem;">
+          >> CROSS_REFERENCING_FILE_SYSTEM_EVENTS</p>
+      </header>
+
+      <div id="timeline-controls" style="margin-top: 4rem; display: flex; gap: 2rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 1; max-width: 400px;">
+          <label class="form-label">ACTIVE_CASE</label>
+          <input type="text" id="timeline-case-id" class="form-input" placeholder="e.g. ALPHA_01">
+        </div>
+        <button onclick="loadTimeline()" class="btn-rainbow">SYNC_TIMELINE</button>
+      </div>
+
+      <div id="timeline-view" style="margin-top: 5rem;">
+        <!-- Timeline events will be injected here -->
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js?v=10.2.3"></script>
+  <script src="js/visuals.js?v=10.2.3"></script>
+  <script src="js/animations.js?v=10.2.3"></script>
+  <script>
+    async function loadTimeline() {
+      const caseId = document.getElementById('timeline-case-id').value || sessionStorage.getItem('current_case');
+      if (!caseId) return alert("Case ID Required");
+
+      const viewer = document.getElementById('timeline-view');
+      viewer.innerHTML = '<div style="color: var(--c2); font-family: var(--font-mono);">RECONSTRUCTING_TIMELINE_FROM_LEDGER...</div>';
+
+      try {
+        const response = await ApiClient.get(`/api/timeline?case_id=${caseId}`);
+
+        if (response.error) {
+          viewer.innerHTML = `<div style="color: var(--c1); font-family: var(--font-mono);">TIMELINE_ERROR: ${response.error}</div>`;
+          return;
+        }
+
+        if (!response.events || response.events.length === 0) {
+          viewer.innerHTML = '<div style="color: var(--text-sub);">NO_DATA_FOUND</div>';
+          return;
+        }
+
+        viewer.innerHTML = `
+                    <div style="position: relative; padding-left: 2rem; border-left: 2px solid var(--border-soft);">
+                        ${response.events.map(event => `
+                            <div class="res-card res-status-success" style="margin-bottom: 3rem; position: relative; background: rgba(255,255,255,0.9);">
+                                <div style="position: absolute; left: -2.4rem; top: 0.2rem; width: 12px; height: 12px; border-radius: 50%; background: var(--c7); border: 3px solid #fff;"></div>
+                                <div class="res-header">
+                                    <span class="res-title">>> ${event.timestamp}</span>
+                                    <span class="res-badge" style="background: var(--c13); color: #fff;">TIMELINE_SYNC</span>
+                                </div>
+                                <div class="res-row"><div class="res-label">PROTOCOL</div><div class="res-value" style="font-weight: 700; color: var(--text-main);">${event.action}</div></div>
+                                <div class="res-row"><div class="res-label">DETAILS</div><div class="res-value">${event.details}</div></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+      } catch (e) {
+        viewer.innerHTML = `<div style="color: var(--c1); font-family: var(--font-mono);">CONNECTION_FAILED: ${e.message}</div>`;
+      }
+    }
+
+    window.onload = () => {
+      const c = sessionStorage.getItem('current_case');
+      if (c) {
+        document.getElementById('timeline-case-id').value = c;
+        loadTimeline();
+      }
+    }
+  </script>
+</body>
+
+</html>

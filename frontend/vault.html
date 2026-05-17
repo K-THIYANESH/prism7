@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault // PRISM7</title>
+    <link rel="stylesheet" href="css/futuristic.css?v=10.2.3">
+</head>
+
+<div id="particle-background"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.3;">
+</div>
+<div id="matrix-rain"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.1;">
+</div>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="logo-text">PRISM7</div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-item">DASHBOARD</a>
+            <a href="vault.html" class="nav-item active">VAULT</a>
+            <a href="timeline.html" class="nav-item">TIMELINE</a>
+            <a href="report.html" class="nav-item">REPORTS</a>
+        </nav>
+    </aside>
+
+    <main class="main-stage">
+        <header>
+            <div class="header-wrapper">
+                <h1>VAULT</h1>
+                <p style="color: var(--text-sub); font-family: var(--font-mono); font-size: 0.8rem; margin-top: 1rem;">
+                    >>
+                    CHAIN_OF_CUSTODY_NODE</p>
+            </div>
+        </header>
+
+        <div id="vault-monitor" style="margin-top: 4rem;">
+            <div class="form-group" style="max-width: 500px; margin-bottom: 3rem;">
+                <label class="form-label">ENTER_CASEID</label>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="vault-case-id" class="form-input" placeholder="e.g. ALPHA_01">
+                    <button onclick="loadVault()" class="btn-rainbow" style="padding: 1rem 2rem;">AUDIT</button>
+                </div>
+            </div>
+
+            <div id="vault-results">
+                <!-- Chain of Custody blocks injected here -->
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/api.js?v=10.2.3"></script>
+<script src="js/visuals.js?v=10.2.3"></script>
+<script src="js/animations.js?v=10.2.3"></script>
+<script>
+    async function loadVault() {
+        const caseId = document.getElementById('vault-case-id').value || sessionStorage.getItem('current_case');
+        if (!caseId) return alert("Case ID Required");
+
+        const results = document.getElementById('vault-results');
+        results.innerHTML = '<div style="color: var(--c2); font-family: var(--font-mono);">SYNCING_WITH_LEDGER...</div>';
+
+        try {
+            const response = await ApiClient.get(`/api/vault/chain/${caseId}`);
+            if (response.error) {
+                results.innerHTML = `<div style="color: var(--c1); font-family: var(--font-mono);">ACCESS_DENIED: ${response.error}</div>`;
+                return;
+            }
+
+            results.innerHTML = response.chain.map(entry => `
+            <div class="res-card res-status-success" style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.9);">
+                <div class="res-header">
+                    <span class="res-title">>> BLOCK_ID: #${entry.id}</span>
+                    <span class="res-badge" style="background: var(--c13); color: #fff;">LEDGER_VERIFIED</span>
+                </div>
+                <div class="res-row"><div class="res-label">TIMESTAMP</div><div class="res-value">${entry.timestamp}</div></div>
+                <div class="res-row"><div class="res-label">ACTION</div><div class="res-value" style="font-weight: 700; color: var(--text-main);">${entry.action.toUpperCase()}</div></div>
+                <div class="res-row"><div class="res-label">FORENSIC_EXHIBIT</div><div class="res-value">${entry.evidence_id}</div></div>
+                <div class="res-row" style="border-top: 1px dotted var(--border-soft); margin-top: 0.5rem; padding-top: 0.5rem;">
+                    <div class="res-label">INTEGRITY_HASH</div>
+                    <div class="res-value" style="color: var(--c2); font-family: var(--font-mono); font-size: 0.65rem;">${entry.file_hash || 'GENESIS_BLOCK'}</div>
+                </div>
+            </div>
+        `).join('') || '<div class="res-card res-status-warn">NO_RECORDS_FOUND</div>';
+        } catch (e) {
+            results.innerHTML = `<div style="color: var(--c1); font-family: var(--font-mono);">CONNECTION_BRIDGE_ERROR: ${e.message}</div>`;
+        }
+    }
+
+    // Auto-load if case exists
+    window.onload = () => {
+        const c = sessionStorage.getItem('current_case');
+        if (c) {
+            document.getElementById('vault-case-id').value = c;
+            loadVault();
+        }
+    };
+</script>
+</body>
+
+</html>

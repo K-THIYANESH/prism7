@@ -1,0 +1,50 @@
+# PRISM7 - Absolute Production Cleanliness GitIgnore
+# Strictly excludes all non-code data, temporary folders, dependencies, and docs.
+
+# Ignore all markdown and document files (strictly no docs or md files in the repo)
+*.md
+**/*.md
+*.txt
+**/docs/
+**/*.pdf
+
+# PRISM7 Local environment secrets
+.env
+.env.*
+
+# Python virtual environment and execution caches
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js dependencies (very large, should never be pushed)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Hardhat blockchain compilation and cache artifacts
+cache/
+artifacts/
+
+# Forensic evidence storage, recovered files, dynamic databases, and PDFs
+# (Crucial: prevents pushing gigabytes of heavy/sensitive forensic data)
+evidence_storage/
+evidence_samples/
+recovered_files/
+reports/
+database/
+prism7_forensic_sample_datasets/
+test_evidence_source/
+
+# OS-specific and editor configuration metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
