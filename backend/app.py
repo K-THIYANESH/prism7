@@ -40,6 +40,12 @@ def api_status():
         "blockchain_connected": blockchain_bridge.is_connected()
     })
 
+@app.route('/healthz')
+@app.route('/health')
+def health_check():
+    """Returns a 200 OK status for Render's periodic health checks"""
+    return jsonify({"status": "healthy", "service": "PRISM7", "state": "active"}), 200
+
 import hashlib
 
 def verify_case_on_chain(case_id):
