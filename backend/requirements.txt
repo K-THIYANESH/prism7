@@ -1,0 +1,8 @@
+# PRISM7 Production Requirements
+flask==3.1.2
+flask-cors
+reportlab==4.4.9
+whoosh==2.7.4
+dfvfs==20240505
+web3>=6.0.0
+gunicorn

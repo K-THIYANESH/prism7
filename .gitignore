@@ -8,6 +8,10 @@
 **/docs/
 **/*.pdf
 
+# EXCEPTION: Explicitly allow requirements.txt for Render/pip
+!requirements.txt
+!**/requirements.txt
+
 # PRISM7 Local environment secrets
 .env
 .env.*
