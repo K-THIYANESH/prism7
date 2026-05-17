@@ -28,18 +28,19 @@ if exist "blockchain\Blockchain-Based-Evidence-Management-System-main" (
     echo [WARNING] Blockchain system not found. Running in offline mode.
 )
 
-:: 3. Launch Backend
-echo [OK] Starting Analysis Engine...
+:: 3. Launch Backend & Hosted Frontend
+echo [OK] Starting Unified Analysis Engine...
 start "PRISM7_BACKEND" cmd /k "call venv\Scripts\activate.bat && python backend/app.py"
 
-:: 3. Launch Frontend
-echo [OK] Starting Command Interface...
-start "PRISM7_FRONTEND" cmd /k "cd frontend && python -m http.server 8080"
+:: 4. Launch Browser automatically
+echo [OK] Launching Forensic Dashboard...
+timeout /t 3 >nul
+start http://127.0.0.1:5000/
 
 echo.
 echo ==========================================
 echo SUCCESS: All Systems Operational.
-echo Frontend: http://localhost:8080 (OPEN THIS IN BROWSER)
+echo Unified App: http://127.0.0.1:5000/ (OPEN THIS IN BROWSER)
 echo Blockchain: http://127.0.0.1:8545 (API Endpoint - Do Not Open)
 echo ==========================================
 echo.
